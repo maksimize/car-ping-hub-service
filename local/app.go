@@ -10,7 +10,7 @@ import (
 )
 var port = getEnv(":" + "PORT", ":8200")
 var redisChannel = getEnv("REDISCHANNEL", "car_status")
-var endPoint = "/vid/"
+var endPoint = "/"
 var client = redis.NewClient(&redis.Options{
 	Addr: getEnv("REDISHOST", "redis") + ":" + getEnv("REDISPORT", "6379"),
 })
