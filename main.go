@@ -4,46 +4,34 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 	"gopkg.in/redis.v3"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
-
-var HTTPMethodNotSupported = errors.New("no name was provided in the HTTP body")
-var port = getEnv(":" + "PORT", ":8200")
-var redisChannel = getEnv("REDISCHANNEL", "car_status")
-var endPoint = "/"
+var redisChannel = "car_status"
+var redisHost = "car-status-channel.nybflb.0001.apse1.cache.amazonaws.com:6379"
 var client = redis.NewClient(&redis.Options{
-	Addr: getEnv("REDISHOST", "redis") + ":" + getEnv("REDISPORT", "6379"),
+	Addr: redisHost,
 })
-
-type Response struct {
-	Status string
-}
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
+var (
+	// ErrNameNotProvided is thrown when a name is not provided
+	HTTPMethodNotSupported = errors.New("no name was provided in the HTTP body")
+)
 
 func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
-	VehicleId := request.Path
-	VehicleId = strings.TrimPrefix(VehicleId, endPoint)
-
 	if request.HTTPMethod == "GET" {
+		var VehicleId = request.QueryStringParameters["vid"]
+		fmt.Printf("=> vid is " + VehicleId)
+		fmt.Printf("=> redis host " + redisHost)
 		client.Publish(redisChannel, VehicleId)
-		return events.APIGatewayProxyResponse{Body: "success", StatusCode: 200}, nil
+		fmt.Printf("=> vid published " + VehicleId + " to " + redisHost)
+		return events.APIGatewayProxyResponse{Body: VehicleId, StatusCode: 200}, nil
+	} else {
+		fmt.Printf("NEITHER\n")
+		return events.APIGatewayProxyResponse{}, HTTPMethodNotSupported
 	}
-	return events.APIGatewayProxyResponse{Body: "wrong url", StatusCode: 200}, nil
-
 }
 
 func main() {
-	fmt.Println("====Car Ping Hub Service App Starts2====")
 	lambda.Start(HandleRequest)
 }

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: HelloGoWebApp SAM project
+Description: Car Ping Hub
 
 # Parameters:
 #   ProjectId:
@@ -13,17 +13,20 @@ Resources:
     Properties:
       Handler: main
       Runtime: go1.x
+      Policies:
+        - VPCAccessPolicy: {}
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      VpcConfig:
+        SubnetIds:
+          - subnet-a22129c5
+        SecurityGroupIds:
+          - sg-41bdf839
       Events:
         GetEvent:
           Type: Api
           Properties:
             Path: /
             Method: get
-        PostEvent:
-          Type: Api
-          Properties:
-            Path: /
-            Method: post
 
   # Api:
   #   Type: AWS::ApiGateway::RestApi
